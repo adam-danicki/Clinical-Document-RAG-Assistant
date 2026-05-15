@@ -2,6 +2,9 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from pathlib import Path
 import shutil
 
+from app.services.pdf_parser import extract_text_from_pdf
+from app.services.chunker import chunk_text
+
 ## Router for document-related endpoints
 router = APIRouter(
     prefix="/documents",
@@ -41,9 +44,17 @@ def upload_document(file: UploadFile = File(...)):
     with file_path.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    extracted_text = extract_text_from_pdf(str(file_path))
+    chunks = chunk_text(extracted_text)
+
     return {
         "message": "File uploaded successfully",
         "filename": file.filename,
         "content_type": file.content_type,
-        "file_path": str(file_path)
+        "file_path": str(file_path),
+        "text_length": len(extracted_text),
+        "chunk_count": len(chunks),
+        "chunk_size": 1000,
+        "chunk_overlap": 200,
+        "first_chunk_preview": chunks[0][:500] if chunks else None
     }
