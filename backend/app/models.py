@@ -5,6 +5,8 @@ from sqlalchemy.orm import relationship
 
 from app.database import Base
 
+from pgvector.sqlalchemy import Vector
+
 class Document(Base):
     __tablename__ = "documents"
 
