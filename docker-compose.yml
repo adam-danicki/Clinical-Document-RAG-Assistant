@@ -1,0 +1,15 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: clinical_rag_db
+    environment:
+      POSTGRES_USER: clinical_user
+      POSTGRES_PASSWORD: clinical_password
+      POSTGRES_DB: clinical_rag
+    ports:
+      - "5432:5432"
+    volumes:
+      - clinical_rag_data:/var/lib/postgresql/data
+
+volumes:
+  clinical_rag_data:

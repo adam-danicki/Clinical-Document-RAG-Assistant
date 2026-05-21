@@ -1,8 +1,12 @@
 from fastapi import FastAPI
+
 from app.api.documents import router as documents_router
+from app.database import Base, engine
+from app import models
 
 ### Main FastAPI application
 app = FastAPI()
+Base.metadata.create_all(bind=engine)
 app.include_router(documents_router)
 
 ## Basic endpoints for health checks and version info
