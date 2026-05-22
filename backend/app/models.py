@@ -31,6 +31,7 @@ class DocumentChunk(Base):
     document_id = Column(Integer, ForeignKey("documents.id"), nullable=False)
     chunk_index = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
+    embedding = Column(Vector(1536), nullable=True)
 
     document = relationship(
         "Document",

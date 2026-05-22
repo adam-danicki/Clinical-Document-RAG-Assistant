@@ -4,9 +4,12 @@ from sqlalchemy.orm import Session
 import shutil
 
 from app.database import get_db
+
 from app.models import Document, DocumentChunk
+
 from app.services.pdf_parser import extract_text_from_pdf
 from app.services.chunker import chunk_text
+from app.services.embeddings import create_embedding
 
 ## Router for document-related endpoints
 router = APIRouter(
@@ -76,22 +79,27 @@ def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db))
     db.refresh(document)
 
     for index, chunk in enumerate(chunks):
+        embedding = create_embedding(chunk)
+
         document_chunk = DocumentChunk(
             document_id=document.id,
             chunk_index=index,
-            content=chunk
+            content=chunk,
+            embedding=embedding
         )
         db.add(document_chunk)
     
     db.commit()
 
     return {
-        "message": "File uploaded successfully",
-        "filename": file.filename,
-        "content_type": file.content_type,
-        "file_path": str(file_path),
-        "text_length": len(extracted_text),
-        "chunk_count": len(chunks),
+        "message": "File uploaded, parsed, chunked, embedded, and saved successfully",
+        "document_id": document.id,
+        "filename": document.filename,
+        "content_type": document.content_type,
+        "file_path": document.file_path,
+        "text_length": document.text_length,
+        "chunk_count": document.chunk_count,
+        "embeddings_created": len(chunks),
         "chunk_size": 1000,
         "chunk_overlap": 200,
         "first_chunk_preview": chunks[0][:500] if chunks else None
