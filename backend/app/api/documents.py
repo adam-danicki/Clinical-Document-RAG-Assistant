@@ -7,9 +7,13 @@ from app.database import get_db
 
 from app.models import Document, DocumentChunk
 
+from app.schemas import SearchRequest, AskRequest
+
 from app.services.pdf_parser import extract_text_from_pdf
 from app.services.chunker import chunk_text
 from app.services.embeddings import create_embedding
+from app.services.rag import generate_answer
+
 
 ## Router for document-related endpoints
 router = APIRouter(
@@ -17,10 +21,12 @@ router = APIRouter(
     tags=["Documents"]
 )
 
+
 ## Directory to store uploaded documents
 ## Create the directory if it doesn't exist
 UPLOAD_DIR = Path("app/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
 
 ## Endpoint to list all uploaded documents (for testing purposes)
 @router.get("/")
@@ -42,12 +48,14 @@ def list_documents(db: Session = Depends(get_db)):
         ]
     }
 
+
 ## Endpoint to check the status of the document service
 @router.get("/status")
 def get_status():
     return {
         "document_service": "ready" 
     }
+
 
 ## Endpoint to handle document uploads
 @router.post("/upload")
@@ -103,4 +111,78 @@ def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db))
         "chunk_size": 1000,
         "chunk_overlap": 200,
         "first_chunk_preview": chunks[0][:500] if chunks else None
+    }
+
+
+## Endpoint to search documents based on a question and return relevant chunks
+@router.post("/search")
+def search_documents(request: SearchRequest,db: Session = Depends(get_db)):
+    question_embedding = create_embedding(request.question)
+
+    results = (
+        db.query(DocumentChunk, Document)
+        .join(Document, DocumentChunk.document_id == Document.id)
+        .filter(DocumentChunk.embedding != None)
+        .order_by(DocumentChunk.embedding.cosine_distance(question_embedding))
+        .limit(request.top_k)
+        .all()
+    )
+
+    return {
+        "question": request.question,
+        "top_k": request.top_k,
+        "results": [
+            {
+                "document_id": document.id,
+                "filename": document.filename,
+                "chunk_id": chunk.id,
+                "chunk_index": chunk.chunk_index,
+                "content_preview": chunk.content[:500],
+            }
+            for chunk, document in results
+        ]
+    }
+
+
+## Endpoint to ask a question and get an answer based on the uploaded documents
+@router.post("/ask")
+def ask_documents(request: AskRequest,db: Session = Depends(get_db)):
+    question_embedding = create_embedding(request.question)
+
+    results = (
+        db.query(DocumentChunk, Document)
+        .join(Document, DocumentChunk.document_id == Document.id)
+        .filter(DocumentChunk.embedding.isnot(None))
+        .order_by(DocumentChunk.embedding.cosine_distance(question_embedding))
+        .limit(request.top_k)
+        .all()
+    )
+
+    context_chunks = [
+        {
+            "document_id": document.id,
+            "filename": document.filename,
+            "chunk_id": chunk.id,
+            "chunk_index": chunk.chunk_index,
+            "content": chunk.content,
+        }
+        for chunk, document in results
+    ]
+
+    answer = generate_answer(request.question, context_chunks)
+
+    return {
+        "question": request.question,
+        "answer": answer,
+        "sources": [
+            {
+                "source_number": index + 1,
+                "document_id": chunk["document_id"],
+                "filename": chunk["filename"],
+                "chunk_id": chunk["chunk_id"],
+                "chunk_index": chunk["chunk_index"],
+                "content_preview": chunk["content"][:500],
+            }
+            for index, chunk in enumerate(context_chunks)
+        ]
     }

@@ -7,6 +7,8 @@ from app.database import Base
 
 from pgvector.sqlalchemy import Vector
 
+
+## Document model to store information about uploaded documents
 class Document(Base):
     __tablename__ = "documents"
 
@@ -24,6 +26,8 @@ class Document(Base):
         cascade="all, delete-orphan"
     )
 
+
+## DocumentChunk model to store individual text chunks and their embeddings
 class DocumentChunk(Base):
     __tablename__ = "document_chunks"
 
