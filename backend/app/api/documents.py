@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from pathlib import Path
 from sqlalchemy.orm import Session
 import shutil
+import math
 
 from app.database import get_db
 
@@ -15,6 +16,7 @@ from app.services.embeddings import create_embedding
 from app.services.rag import generate_answer
 
 
+
 ## Router for document-related endpoints
 router = APIRouter(
     prefix="/documents",
@@ -26,6 +28,12 @@ router = APIRouter(
 ## Create the directory if it doesn't exist
 UPLOAD_DIR = Path("app/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+## Helper function to calculate dynamic top_k based on total chunks
+def calculate_dynamic_top_k(total_chunks: int, min_k: int = 5, max_k: int = 40, ratio: float = 0.05) -> int:
+    if total_chunks <= 0:
+        return min_k
+    return min(max_k, max(min_k, math.ceil(total_chunks * ratio)))
 
 
 ## Endpoint to list all uploaded documents (for testing purposes)
@@ -118,19 +126,22 @@ def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db))
 @router.post("/search")
 def search_documents(request: SearchRequest,db: Session = Depends(get_db)):
     question_embedding = create_embedding(request.question)
+    total_chunks = db.query(DocumentChunk).count()
+    top_k = request.top_k if request.top_k and request.top_k > 0 else calculate_dynamic_top_k(total_chunks)
 
     results = (
         db.query(DocumentChunk, Document)
         .join(Document, DocumentChunk.document_id == Document.id)
         .filter(DocumentChunk.embedding != None)
         .order_by(DocumentChunk.embedding.cosine_distance(question_embedding))
-        .limit(request.top_k)
+        .limit(top_k)
         .all()
     )
 
     return {
         "question": request.question,
-        "top_k": request.top_k,
+        "top_k": top_k,
+        "total_chunks": total_chunks,
         "results": [
             {
                 "document_id": document.id,
@@ -148,13 +159,15 @@ def search_documents(request: SearchRequest,db: Session = Depends(get_db)):
 @router.post("/ask")
 def ask_documents(request: AskRequest,db: Session = Depends(get_db)):
     question_embedding = create_embedding(request.question)
+    total_chunks = db.query(DocumentChunk).count()
+    top_k = request.top_k if request.top_k and request.top_k > 0 else calculate_dynamic_top_k(total_chunks)
 
     results = (
         db.query(DocumentChunk, Document)
         .join(Document, DocumentChunk.document_id == Document.id)
         .filter(DocumentChunk.embedding.isnot(None))
         .order_by(DocumentChunk.embedding.cosine_distance(question_embedding))
-        .limit(request.top_k)
+        .limit(top_k)
         .all()
     )
 
@@ -173,6 +186,8 @@ def ask_documents(request: AskRequest,db: Session = Depends(get_db)):
 
     return {
         "question": request.question,
+        "top_k": top_k,
+        "total_chunks": total_chunks,
         "answer": answer,
         "sources": [
             {
