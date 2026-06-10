@@ -57,6 +57,24 @@ def list_documents(db: Session = Depends(get_db)):
     }
 
 
+## Endpoint to get details of a specific document by ID
+@router.get("/{document_id}")
+def get_document(document_id: int, db: Session = Depends(get_db)):
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    return {
+        "id": document.id,
+        "filename": document.filename,
+        "content_type": document.content_type,
+        "file_path": document.file_path,
+        "text_length": document.text_length,
+        "chunk_count": document.chunk_count,
+        "uploaded_at": document.uploaded_at.isoformat()
+    }
+
+
 ## Endpoint to check the status of the document service
 @router.get("/status")
 def get_status():
@@ -119,6 +137,29 @@ def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db))
         "chunk_size": 1000,
         "chunk_overlap": 200,
         "first_chunk_preview": chunks[0][:500] if chunks else None
+    }
+
+
+## Endpoint to delete a file from the backend
+@router.delete("/{document_id}")
+def delete_document(document_id: int, db: Session = Depends(get_db)):
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    file_path = Path(document.file_path)
+    if file_path.exists():
+        file_path.unlink()
+    
+    db.query(DocumentChunk).filter(DocumentChunk.document_id == document_id).delete()
+    
+    db.delete(document)
+    db.commit()
+    
+    return {
+        "message": "Document deleted successfully",
+        "document_id": document_id,
+        "filename": document.filename
     }
 
 

@@ -1,0 +1,151 @@
+/* Page layout */
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: flex-start;
+  background-color: #f5f5f5;
+  padding: 0 2rem 0 0;
+}
+
+.home-container {
+  width: 12000px;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+/* Sidebar panel */
+.sidebar {
+  flex: 0 0 0%;
+  min-width: 360px;
+  min-height: 100vh;
+  background: #f8fafc;
+  padding: 2rem 1.5rem;
+  border-right: 1px solid rgba(15, 23, 42, 0.12);
+  position: relative;
+  left: 0rem;
+  margin-right: 0rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow-y: auto;
+}
+
+.sidebar h2 {
+  margin-bottom: 1rem;
+  margin-left: 1rem;
+  margin-top: 1rem;
+  font-size: 1.35rem;
+  color: #102a43;
+  text-align: left;
+}
+
+.file-list {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.file-list-item {
+  padding: 0.85rem 1rem;
+  border-radius: 0.85rem;
+  background: #ffffff;
+  color: #102a43;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.file-list-empty {
+  color: #64748b;
+}
+
+/* Main content panel */
+.main-panel {
+  flex: 0 0 70%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.home-content {
+  width: 100%;
+  max-width: 640px;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.home-content h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.home-content p {
+  font-size: 1.1rem;
+  color: #666;
+  line-height: 1.6;
+  margin: 0 auto;
+  max-width: 620px;
+}
+
+/* Upload card */
+.upload-card {
+  width: 100%;
+  max-width: 
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.75rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.upload-card h2 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  color: #102a43;
+}
+
+.upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.file-picker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 1.2rem;
+  background: #1d4ed8;
+  color: white;
+  border-radius: 0.85rem;
+  cursor: pointer;
+}
+
+.file-picker input {
+  display: none;
+}
+
+.submit-button {
+  padding: 0.9rem 1.35rem;
+  background: #0f172a;
+  color: white;
+  border: none;
+  border-radius: 0.85rem;
+  cursor: pointer;
+}
+
+.selected-file,
+.status-text {
+  margin-top: 0.75rem;
+  color: #334e68;
+}
+
+.selected-file {
+  font-weight: 600;
+}

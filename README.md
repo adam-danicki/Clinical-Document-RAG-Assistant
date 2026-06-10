@@ -46,7 +46,7 @@ Completed so far:
 
 Not built yet:
 
-- React frontend
+- React frontend (scaffolded in `frontend/`)
 - Authentication
 - User accounts
 - Document deletion endpoint
