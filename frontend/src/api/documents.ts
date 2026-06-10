@@ -13,6 +13,13 @@ export interface AskResponse {
   sources?: Array<{ documentId: string; preview: string }>;
 }
 
+// Define the structure of the response from the /documents/delete endpoint
+export interface DeleteDocumentResponse {
+  message: string;
+  document_id: number;
+  filename: string;
+}
+
 // Fetch all uploaded documents
 export async function fetchDocuments(): Promise<DocumentUploadResponse[]> {
   const response = await fetch(`${API_BASE}/documents`);
@@ -48,6 +55,20 @@ export async function uploadDocument(file: File): Promise<DocumentUploadResponse
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Upload failed: ${response.status} ${errorText}`);
+  }
+
+  return response.json();
+}
+
+// Delete a saved file
+export async function deleteDocument(documentId: number): Promise<DeleteDocumentResponse> {
+  const response = await fetch(`${API_BASE}/documents/${documentId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Delete failed: ${response.status} ${errorText}`);
   }
 
   return response.json();

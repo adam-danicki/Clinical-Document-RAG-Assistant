@@ -1,6 +1,6 @@
 import './App.css';
 import { useEffect, useState } from 'react';
-import { uploadDocument, fetchDocuments, DocumentUploadResponse } from './api/documents';
+import { uploadDocument, fetchDocuments, DocumentUploadResponse, deleteDocument } from './api/documents';
 import UploadForm from './components/UploadForm';
 import Sidebar from './components/Sidebar';
 
@@ -40,10 +40,19 @@ export default function App() {
     }
   };
 
+  const handleDelete = async (documentId: number) => {
+    try {
+      await deleteDocument(documentId);
+      await loadDocuments();
+    } catch (error) {
+      setStatus((error as Error).message);
+    }
+  };
+
   return (
     <div className="page-wrapper">
       <div className="home-container">
-        <Sidebar files={files} />
+        <Sidebar files={files} onDelete={handleDelete} />
 
         <main className="main-panel">
           <div className="home-content">

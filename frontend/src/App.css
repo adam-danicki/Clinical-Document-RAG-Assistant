@@ -56,10 +56,59 @@
   background: #ffffff;
   color: #102a43;
   border: 1px solid rgba(15, 23, 42, 0.08);
+  position: relative;
+}
+
+.file-item-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.file-item-content span {
+  flex: 1;
+  word-break: break-word;
+}
+
+.delete-button {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.delete-button:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.delete-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .file-list-empty {
   color: #64748b;
+}
+
+.error-message {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 4px;
+  font-size: 0.875rem;
 }
 
 /* Main content panel */
