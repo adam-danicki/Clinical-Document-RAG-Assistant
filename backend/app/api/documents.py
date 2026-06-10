@@ -8,7 +8,17 @@ from app.database import get_db
 
 from app.models import Document, DocumentChunk
 
-from app.schemas import SearchRequest, AskRequest
+from app.schemas import (
+    SearchRequest,
+    AskRequest,
+    DocumentResponse,
+    DocumentListResponse,
+    StatusResponse,
+    UploadDocumentResponse,
+    DeleteDocumentResponse,
+    SearchResponse,
+    AskResponse,
+)
 
 from app.services.pdf_parser import extract_text_from_pdf
 from app.services.chunker import chunk_text
@@ -37,28 +47,28 @@ def calculate_dynamic_top_k(total_chunks: int, min_k: int = 5, max_k: int = 40, 
 
 
 ## Endpoint to list all uploaded documents (for testing purposes)
-@router.get("/")
+@router.get("/", response_model=DocumentListResponse)
 def list_documents(db: Session = Depends(get_db)):
     documents = db.query(Document).order_by(Document.uploaded_at.desc()).all()
 
     return {
         "documents": [
             {
-                "id": documents.id,
-                "filename": documents.filename,
-                "content_type": documents.content_type,
-                "file_path": documents.file_path,
-                "text_length": documents.text_length,
-                "chunk_count": documents.chunk_count,
-                "uploaded_at": documents.uploaded_at.isoformat()
+                "id": document.id,
+                "filename": document.filename,
+                "content_type": document.content_type,
+                "file_path": document.file_path,
+                "text_length": document.text_length,
+                "chunk_count": document.chunk_count,
+                "uploaded_at": document.uploaded_at,
             }
-            for documents in documents
+            for document in documents
         ]
     }
 
 
 ## Endpoint to get details of a specific document by ID
-@router.get("/{document_id}")
+@router.get("/{document_id}", response_model=DocumentResponse)
 def get_document(document_id: int, db: Session = Depends(get_db)):
     document = db.query(Document).filter(Document.id == document_id).first()
     if not document:
@@ -71,20 +81,20 @@ def get_document(document_id: int, db: Session = Depends(get_db)):
         "file_path": document.file_path,
         "text_length": document.text_length,
         "chunk_count": document.chunk_count,
-        "uploaded_at": document.uploaded_at.isoformat()
+        "uploaded_at": document.uploaded_at,
     }
 
 
 ## Endpoint to check the status of the document service
-@router.get("/status")
+@router.get("/status", response_model=StatusResponse)
 def get_status():
     return {
-        "document_service": "ready" 
+        "document_service": "ready"
     }
 
 
 ## Endpoint to handle document uploads
-@router.post("/upload")
+@router.post("/upload", response_model=UploadDocumentResponse)
 def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
     if not file.filename.endswith('.pdf'):
         raise HTTPException(
@@ -141,7 +151,7 @@ def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db))
 
 
 ## Endpoint to delete a file from the backend
-@router.delete("/{document_id}")
+@router.delete("/{document_id}", response_model=DeleteDocumentResponse)
 def delete_document(document_id: int, db: Session = Depends(get_db)):
     document = db.query(Document).filter(Document.id == document_id).first()
     if not document:
@@ -164,7 +174,7 @@ def delete_document(document_id: int, db: Session = Depends(get_db)):
 
 
 ## Endpoint to search documents based on a question and return relevant chunks
-@router.post("/search")
+@router.post("/search", response_model=SearchResponse)
 def search_documents(request: SearchRequest,db: Session = Depends(get_db)):
     question_embedding = create_embedding(request.question)
     total_chunks = db.query(DocumentChunk).count()
@@ -197,7 +207,7 @@ def search_documents(request: SearchRequest,db: Session = Depends(get_db)):
 
 
 ## Endpoint to ask a question and get an answer based on the uploaded documents
-@router.post("/ask")
+@router.post("/ask", response_model=AskResponse)
 def ask_documents(request: AskRequest,db: Session = Depends(get_db)):
     question_embedding = create_embedding(request.question)
     total_chunks = db.query(DocumentChunk).count()
